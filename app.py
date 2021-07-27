@@ -16,17 +16,16 @@ from flask import Flask, jsonify
 
 engine = create_engine("sqlite:///Resources/hawaii.sqlite")
 
-# reflect an existing database into a new model
+# Turn existing database into a new model
 Base = automap_base()
-# reflect the tables
+# Create Table
 Base.prepare(engine, reflect=True)
 
-# Save reference to the tables
+# Save References to the Table
 Measurement = Base.classes.measurement
 Station = Base.classes.station
 
-
-# Flask Setup
+# Set up Flask
 
 app = Flask(__name__)
 
@@ -43,15 +42,15 @@ def welcome():
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs<br/>"
-        f"/api/v1.0/start (enter as YYYY-MM-DD)<br/>"
-        f"/api/v1.0/start/end (enter as YYYY-MM-DD/YYYY-MM-DD)"
+        f"/api/v1.0/start (enter YYYY-MM-DD)<br/>"
+        f"/api/v1.0/start/end (enter YYYY-MM-DD/YYYY-MM-DD)"
 
     )
 
-
-@app.route("/api/v1.0/precipitation") #Convert query results to a dictionary using `date` as the key and `tobs` as the value
+# Convert query results into a dictionary using `date` as the key and `tobs` as the value
+@app.route("/api/v1.0/precipitation") 
 def precipitation():
-    # Create session (link) from Python to the DB
+    # Create a session from Python to the DB
     session = Session(engine)
 
     # Query Measurement
@@ -68,27 +67,27 @@ def precipitation():
 
     return jsonify(precipitation_date_tobs)
 
-
-@app.route("/api/v1.0/stations") #Return a JSON list of stations from the dataset
+# Return a JSON List of Stations from Dataset
+@app.route("/api/v1.0/stations") 
 def stations():
-    # Create session (link) from Python to the DB
+    # Create Session from Python to DB
     session = Session(engine)
 
     # Query Stations
     results = session.query(Station.name).all()
 
-    # Convert list of tuples into normal list
+    # Convert List of Tuples into Normal list
     station_details = list(np.ravel(results))
 
     return jsonify(station_details)
 
-
-@app.route("/api/v1.0/tobs") # Query the dates and temperature observations of the most active station for the last year of data
+# Query the Dates and Temperature for the Most Active Station for Last Year
+@app.route("/api/v1.0/tobs") 
 def tobs():
-    # Create our session (link) from Python to the DB
+    # Create our session from Python to DB
     session = Session(engine)
 
-    # Query Measurements for latest date and calculate query_start_date
+    # Query Measurements for Latest Data and Calculate Start Date
     latest_date = (session.query(Measurement.date)
                           .order_by(Measurement.date
                           .desc())
@@ -99,7 +98,7 @@ def tobs():
     latest_date_obj = dt.datetime.strptime(latest_date_str, '(%Y-%m-%d)')
     query_start_date = dt.date(latest_date_obj.year, latest_date_obj.month, latest_date_obj.day) - dt.timedelta(days=366)
      
-    # Query station names and their observation counts sorted descending and select most active station
+    # Query Station Names and Observation Counts. Descend Sort and Select Most Active.
     q_station_list = (session.query(Measurement.station, func.count(Measurement.station))
                              .group_by(Measurement.station)
                              .order_by(func.count(Measurement.station).desc())
@@ -109,7 +108,7 @@ def tobs():
     print(station_hno)
 
 
-    # Return a list of tobs for the year before the final date
+    # Return a list of tobs for Year prior to Last Day.
     results = (session.query(Measurement.station, Measurement.date, Measurement.tobs)
                       .filter(Measurement.date >= query_start_date)
                       .filter(Measurement.station == station_hno)
@@ -126,14 +125,14 @@ def tobs():
 
     return jsonify(tobs_list)
 
-
-@app.route("/api/v1.0/<start>") # Calculate `TMIN`, `TAVG`, and `TMAX` for all dates greater than and equal to the start date
+# Calculate `TMIN`, `TAVG`, and `TMAX` for all dates >= to Start Date
+@app.route("/api/v1.0/<start>") 
 def start_only(start):
 
-    # Create session (link) from Python to the DB
+    # Create session from Python to DB
     session = Session(engine)
 
-    # Date Range (only for help to user in case date gets entered wrong)
+    # Date Range
     date_range_max = session.query(Measurement.date).order_by(Measurement.date.desc()).first()
     date_range_max_str = str(date_range_max)
     date_range_max_str = re.sub("'|,", "",date_range_max_str)
@@ -145,7 +144,7 @@ def start_only(start):
     print (date_range_min_str)
 
 
-    # Check for valid entry of start date
+    # Check for Valid Start Date
     valid_entry = session.query(exists().where(Measurement.date == start)).scalar()
  
     if valid_entry:
@@ -159,10 +158,10 @@ def start_only(start):
     	tavg ='{0:.4}'.format(results[0][1])
     	tmax =results[0][2]
     
-    	result_printout =( ['Entered Start Date: ' + start,
-    						'The lowest Temperature was: '  + str(tmin) + ' F',
-    						'The average Temperature was: ' + str(tavg) + ' F',
-    						'The highest Temperature was: ' + str(tmax) + ' F'])
+    	result_printout =( ['Start Date: ' + start,
+    						'The Lowest Temperature was: '  + str(tmin) + ' F',
+    						'The Average Temperature was: ' + str(tavg) + ' F',
+    						'The Highest Temperature was: ' + str(tmax) + ' F'])
     	return jsonify(result_printout)
 
     return jsonify({"error": f"Input Date {start} not valid. Date Range is {date_range_min_str} to {date_range_max_str}"}), 404
