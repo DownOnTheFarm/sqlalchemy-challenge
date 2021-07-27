@@ -164,16 +164,16 @@ def start_only(start):
     						'The Highest Temperature was: ' + str(tmax) + ' F'])
     	return jsonify(result_printout)
 
-    return jsonify({"error": f"Input Date {start} not valid. Date Range is {date_range_min_str} to {date_range_max_str}"}), 404
+    return jsonify({"error": f"Date {start} not valid. Date Range is {date_range_min_str} to {date_range_max_str}"}), 404
    
-
-@app.route("/api/v1.0/<start>/<end>") # Calculate the `TMIN`, `TAVG`, and `TMAX` for dates between the start and end date inclusive
+# Calculate the `TMIN`, `TAVG`, and `TMAX` for Dates between Start Date/End Date.
+@app.route("/api/v1.0/<start>/<end>") 
 def start_end(start, end):
 
-    # Create session (link) from Python to the DB
+    # Create session from Python to DB
     session = Session(engine)
 
-    # Date Range (only for help to user in case date gets entered wrong)
+    # Date Range
     date_range_max = session.query(Measurement.date).order_by(Measurement.date.desc()).first()
     date_range_max_str = str(date_range_max)
     date_range_max_str = re.sub("'|,", "",date_range_max_str)
@@ -184,10 +184,10 @@ def start_end(start, end):
     date_range_min_str = re.sub("'|,", "",date_range_min_str)
     print (date_range_min_str)
 
-    # Check for valid entry of start date
+    # Check for valid Start Date
     valid_entry_start = session.query(exists().where(Measurement.date == start)).scalar()
  	
- 	# Check for valid entry of end date
+ 	# Check for valid End Date
     valid_entry_end = session.query(exists().where(Measurement.date == end)).scalar()
 
     if valid_entry_start and valid_entry_end:
@@ -202,21 +202,21 @@ def start_end(start, end):
     	tavg ='{0:.4}'.format(results[0][1])
     	tmax =results[0][2]
     
-    	result_printout =( ['Entered Start Date: ' + start,
-    						'Entered End Date: ' + end,
-    						'The lowest Temperature was: '  + str(tmin) + ' F',
-    						'The average Temperature was: ' + str(tavg) + ' F',
-    						'The highest Temperature was: ' + str(tmax) + ' F'])
+    	result_printout =( ['Start Date: ' + start,
+    						'End Date: ' + end,
+    						'The Lowest Temperature was: '  + str(tmin) + ' F',
+    						'The Average Temperature was: ' + str(tavg) + ' F',
+    						'The Highest Temperature was: ' + str(tmax) + ' F'])
     	return jsonify(result_printout)
 
     if not valid_entry_start and not valid_entry_end:
-    	return jsonify({"error": f"Input Start {start} and End Date {end} not valid. Date Range is {date_range_min_str} to {date_range_max_str}"}), 404
+    	return jsonify({"error": f"Start {start} and End Date {end} not valid. Date Range is {date_range_min_str} to {date_range_max_str}"}), 404
 
     if not valid_entry_start:
-    	return jsonify({"error": f"Input Start Date {start} not valid. Date Range is {date_range_min_str} to {date_range_max_str}"}), 404
+    	return jsonify({"error": f"Start Date {start} not valid. Date Range is {date_range_min_str} to {date_range_max_str}"}), 404
 
     if not valid_entry_end:
-    	return jsonify({"error": f"Input End Date {end} not valid. Date Range is {date_range_min_str} to {date_range_max_str}"}), 404
+    	return jsonify({"error": f"End Date {end} not valid. Date Range is {date_range_min_str} to {date_range_max_str}"}), 404
 
 
 if __name__ == '__main__':
